@@ -62,7 +62,10 @@ async function submitHandler(req, res) {
     }
     console.log("Launching browser...");
     const browser = await puppeteer.launch({
-      executablePath: '/usr/bin/chromium',
+      executablePath:
+      process.env.NODE_ENV === "production"
+        ? process.env.PUPPETEER_EXECUTABLE_PATH
+        : puppeteer.executablePath(),
       args: [
         "--disable-setuid-sandbox",
         "--no-sandbox",
