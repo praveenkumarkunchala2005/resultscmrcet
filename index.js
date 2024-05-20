@@ -1,7 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const puppeteer = require('puppeteer-core');
-const chromium = require('chrome-aws-lambda');
 const fs = require('fs');
 const cheerio = require('cheerio');
 const { MongoClient } = require('mongodb');
