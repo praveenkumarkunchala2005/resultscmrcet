@@ -1,21 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const puppeteer = require('puppeteer-core');
+const { MongoClient } = require('mongodb');
 const fs = require('fs');
 const cheerio = require('cheerio');
-const { MongoClient } = require('mongodb');
-const { join } = require('path');
-require("dotenv").config();
+const puppeteer = require('puppeteer-core'); // Import puppeteer-core
 
 const uri = "mongodb+srv://abcd:abcdabcd@cluster0.0lherrc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const client = new MongoClient(uri);
 let collection;
-
-async function main() {
-  const browserFetcher = puppeteer.createBrowserFetcher();
-  const revisionInfo = await browserFetcher.download('884014');
-  console.log(revisionInfo);
-}
 
 client.connect()
   .then(() => {
@@ -29,7 +21,7 @@ client.connect()
   });
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -68,21 +60,17 @@ async function submitHandler(req, res) {
         </form>
       `);
     }
-
-    console.log('Launching browser...');
+    console.log("Launching browser...");
     const browser = await puppeteer.launch({
+      executablePath: '/usr/bin/chromium',
       args: [
         "--disable-setuid-sandbox",
         "--no-sandbox",
         "--single-process",
         "--no-zygote",
       ],
-      executablePath:
-        process.env.NODE_ENV === "production"
-          ? process.env.PUPPETEER_EXECUTABLE_PATH
-          : puppeteer.executablePath(),
     });
-  
+
     const page = await browser.newPage();
 
     console.log('Navigating to login page...');
@@ -98,9 +86,10 @@ async function submitHandler(req, res) {
     await page.type('#txtPassword', password);
     await page.waitForSelector('#btnSubmit');
     await page.click('#btnSubmit');
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await page.waitForNavigation();
+
     await page.click('#ctl00_cpStud_lnkOverallMarksSemwiseMarks');
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await page.waitForTimeout(3000);
 
     const content = await page.content();
     const $ = cheerio.load(content);
@@ -114,7 +103,7 @@ async function submitHandler(req, res) {
 
     const marksData = $('#ctl00_cpStud_pnMarks').html();
     fs.writeFileSync('page.html', marksData);
-    await browser.close();
+
     const userid = username.toLowerCase();
     console.log('User ID:', userid);
     data = {
@@ -125,6 +114,7 @@ async function submitHandler(req, res) {
     };
     await collection.insertOne(data);
     console.log('Data inserted into MongoDB');
+    await browser.close(); // Close the browser instance
     res.send(`
     <h2>RESULTS</h2>
       <form action="/submit" method="POST">
