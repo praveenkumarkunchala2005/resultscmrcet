@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "index.js",
+      "src": "app.js",
       "use": "@vercel/node",
       "config": {
         "includeFiles": ["node_modules/puppeteer/.local-chromium/**/*"]
@@ -12,7 +12,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "index.js"
+      "dest": "app.js"
     }
   ]
 }
