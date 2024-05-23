@@ -1,10 +1,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const puppeteer = require('puppeteer');
+const { MongoClient } = require('mongodb');
 const fs = require('fs');
 const cheerio = require('cheerio');
-
-const { MongoClient } = require('mongodb');
+const puppeteer = require('puppeteer-core'); // Import puppeteer-core
 
 const uri = "mongodb+srv://abcd:abcdabcd@cluster0.0lherrc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const client = new MongoClient(uri);
@@ -18,20 +17,16 @@ client.connect()
   })
   .catch(err => {
     console.error('Error connecting to MongoDB:', err);
-    process.exit(1);
+    process.exit(1); // Exit the process if unable to connect to MongoDB
   });
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/main.html');
-});
-
-app.get('/upload', (req, res) => {
-  res.sendFile(__dirname + '/upload.html');
 });
 
 app.post('/submit', submitHandler);
@@ -50,48 +45,24 @@ async function submitHandler(req, res) {
     console.log('Data from MongoDB:', userid1);
     if (data) {
       return res.send(`
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>User Info</title>
-              <!-- Bootstrap CSS -->
-              <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-          </head>
-          <body>
-              <div class="container">
-                  <div class="row justify-content-center align-items-center" style="height: 100vh;">
-                      <div class="col-md-6">
-                          <div class="text-center">
-                              <h2 class="mb-4">RESULTS</h2>
-                              <form action="/submit" method="POST">
-                                  <div class="form-group">
-                                      <label for="username">Enter your username:</label>
-                                      <input type="text" class="form-control" id="username" name="username">
-                                  </div>
-                                  <button type="submit" class="btn btn-success btn-block">Submit</button>
-                              </form>
-                          </div>
-                          <div class="text-center mt-4">
-                              <h2>User Info</h2>
-                              <p>Name: ${data.name}</p>
-                              <p>CGPA: ${data.cgpa}</p>
-                              <form action="/showMarks" method="POST">
-                                  <input type="hidden" name="username" value="${userid1}">
-                                  <button type="submit" class="btn btn-primary btn-block">Show Marks Details</button>
-                              </form>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </body>
-          </html>
+        <h2>RESULTS</h2>
+        <form action="/submit" method="POST">
+          <label for="username">Enter your username:</label>
+          <input type="text" id="username" name="username">
+          <button type="submit">Submit</button>
+        </form>
+        <h2>User Info</h2>
+        <p>Name: ${data.name}</p>
+        <p>CGPA: ${data.cgpa}</p>
+        <form action="/showMarks" method="POST">
+          <input type="hidden" name="username" value="${userid1}">
+          <button type="submit">Show Marks Details</button>
+        </form>
       `);
-  }
-  
+    }
     console.log("Launching browser...");
     const browser = await puppeteer.launch({
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
       args: [
         "--disable-setuid-sandbox",
         "--no-sandbox",
@@ -100,14 +71,12 @@ async function submitHandler(req, res) {
       ],
     });
 
-    const browserExecutablePath = puppeteer.executablePath();
-    //console.log(`Chromium executable path: ${browserExecutablePath}`);
     const page = await browser.newPage();
 
     console.log('Navigating to login page...');
     await page.goto('https://www.cmrcetexaminations.com/BeeSERP/Login.aspx');
 
-    const username = username1.toUpperCase() + 'P';
+    const username = username1.toUpperCase();
     const password = username;
     await page.waitForSelector('#txtUserName');
     await page.type('#txtUserName', username);
@@ -117,9 +86,10 @@ async function submitHandler(req, res) {
     await page.type('#txtPassword', password);
     await page.waitForSelector('#btnSubmit');
     await page.click('#btnSubmit');
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await page.waitForNavigation();
+
     await page.click('#ctl00_cpStud_lnkOverallMarksSemwiseMarks');
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await page.waitForTimeout(3000);
 
     const content = await page.content();
     const $ = cheerio.load(content);
@@ -133,8 +103,8 @@ async function submitHandler(req, res) {
 
     const marksData = $('#ctl00_cpStud_pnMarks').html();
     fs.writeFileSync('page.html', marksData);
-    await browser.close();
-    const userid = username1.toLowerCase();
+
+    const userid = username.toLowerCase();
     console.log('User ID:', userid);
     data = {
       userid: userid,
@@ -144,77 +114,33 @@ async function submitHandler(req, res) {
     };
     await collection.insertOne(data);
     console.log('Data inserted into MongoDB');
-    return res.send(`
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>User Info</title>
-              <!-- Bootstrap CSS -->
-              <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-          </head>
-          <body>
-              <div class="container">
-                  <div class="row justify-content-center align-items-center" style="height: 100vh;">
-                      <div class="col-md-6">
-                          <div class="text-center">
-                              <h2 class="mb-4">RESULTS</h2>
-                              <form action="/submit" method="POST">
-                                  <div class="form-group">
-                                      <label for="username">Enter your username:</label>
-                                      <input type="text" class="form-control" id="username" name="username">
-                                  </div>
-                                  <button type="submit" class="btn btn-success btn-block">Submit</button>
-                              </form>
-                          </div>
-                          <div class="text-center mt-4">
-                              <h2>User Info</h2>
-                              <p>Name: ${data.name}</p>
-                              <p>CGPA: ${data.cgpa}</p>
-                              <form action="/showMarks" method="POST">
-                                  <input type="hidden" name="username" value="${userid1}">
-                                  <button type="submit" class="btn btn-primary btn-block">Show Marks Details</button>
-                              </form>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </body>
-          </html>
-      `);
+    await browser.close(); // Close the browser instance
+    res.send(`
+    <h2>RESULTS</h2>
+      <form action="/submit" method="POST">
+        <label for="username">Enter your username:</label>
+        <input type="text" id="username" name="username">
+        <button type="submit">Submit</button>
+      </form>
+      <h2>User Info</h2>
+      <p>Name: ${data.name}</p>
+      <p>CGPA: ${data.cgpa}</p>
+      <form action="/showMarks" method="POST">
+        <input type="hidden" name="username" value="${username}">
+        <button type="submit">Show Marks Details</button>
+      </form>
+    `);
   } catch (error) {
     console.error('An error occurred:', error);
     res.status(500).send(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>User Info</title>
-        <!-- Bootstrap CSS -->
-        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    </head>
-    <body>
-        <div class="container">
-            <div class="row justify-content-center align-items-center" style="height: 100vh;">
-                <div class="col-md-6">
-                    <div class="text-center">
-                        <h2 class="mb-4">RESULTS</h2>
-                        <form action="/submit" method="POST">
-                            <div class="form-group">
-                                <label for="username">Enter your username:</label>
-                                <input type="text" class="form-control" id="username" name="username">
-                            </div>
-                            <button type="submit" class="btn btn-success btn-block">Submit</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </body>
-    </html>
-`);
+      <h2>RESULTS</h2>
+      <form action="/submit" method="POST">
+        <label for="username">Enter your username:</label>
+        <input type="text" id="username" name="username">
+        <button type="submit">Submit</button>
+      </form>
+      <p>User data not found</p>
+    `);
   }
 }
 
@@ -239,7 +165,6 @@ app.post('/showMarks', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
-
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
