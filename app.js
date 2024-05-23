@@ -45,19 +45,43 @@ async function submitHandler(req, res) {
     console.log('Data from MongoDB:', userid1);
     if (data) {
       return res.send(`
-        <h2>RESULTS</h2>
-        <form action="/submit" method="POST">
-          <label for="username">Enter your username:</label>
-          <input type="text" id="username" name="username">
-          <button type="submit">Submit</button>
-        </form>
-        <h2>User Info</h2>
-        <p>Name: ${data.name}</p>
-        <p>CGPA: ${data.cgpa}</p>
-        <form action="/showMarks" method="POST">
-          <input type="hidden" name="username" value="${userid1}">
-          <button type="submit">Show Marks Details</button>
-        </form>
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>User Info</title>
+              <!-- Bootstrap CSS -->
+              <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+          </head>
+          <body>
+              <div class="container">
+                  <div class="row justify-content-center align-items-center" style="height: 100vh;">
+                      <div class="col-md-6">
+                          <div class="text-center">
+                              <h2 class="mb-4">RESULTS</h2>
+                              <form action="/submit" method="POST">
+                                  <div class="form-group">
+                                      <label for="username">Enter your username:</label>
+                                      <input type="text" class="form-control" id="username" name="username">
+                                  </div>
+                                  <button type="submit" class="btn btn-success btn-block">Submit</button>
+                              </form>
+                          </div>
+                          <div class="text-center mt-4">
+                              <h2>User Info</h2>
+                              <p>Name: ${data.name}</p>
+                              <p>CGPA: ${data.cgpa}</p>
+                              <form action="/showMarks" method="POST">
+                                  <input type="hidden" name="username" value="${userid1}">
+                                  <button type="submit" class="btn btn-primary btn-block">Show Marks Details</button>
+                              </form>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </body>
+          </html>
       `);
     }
     console.log("Launching browser...");
@@ -115,32 +139,77 @@ async function submitHandler(req, res) {
     await collection.insertOne(data);
     console.log('Data inserted into MongoDB');
     await browser.close(); // Close the browser instance
-    res.send(`
-    <h2>RESULTS</h2>
-      <form action="/submit" method="POST">
-        <label for="username">Enter your username:</label>
-        <input type="text" id="username" name="username">
-        <button type="submit">Submit</button>
-      </form>
-      <h2>User Info</h2>
-      <p>Name: ${data.name}</p>
-      <p>CGPA: ${data.cgpa}</p>
-      <form action="/showMarks" method="POST">
-        <input type="hidden" name="username" value="${username}">
-        <button type="submit">Show Marks Details</button>
-      </form>
-    `);
+    return res.send(`
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>User Info</title>
+              <!-- Bootstrap CSS -->
+              <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+          </head>
+          <body>
+              <div class="container">
+                  <div class="row justify-content-center align-items-center" style="height: 100vh;">
+                      <div class="col-md-6">
+                          <div class="text-center">
+                              <h2 class="mb-4">RESULTS</h2>
+                              <form action="/submit" method="POST">
+                                  <div class="form-group">
+                                      <label for="username">Enter your username:</label>
+                                      <input type="text" class="form-control" id="username" name="username">
+                                  </div>
+                                  <button type="submit" class="btn btn-success btn-block">Submit</button>
+                              </form>
+                          </div>
+                          <div class="text-center mt-4">
+                              <h2>User Info</h2>
+                              <p>Name: ${data.name}</p>
+                              <p>CGPA: ${data.cgpa}</p>
+                              <form action="/showMarks" method="POST">
+                                  <input type="hidden" name="username" value="${userid1}">
+                                  <button type="submit" class="btn btn-primary btn-block">Show Marks Details</button>
+                              </form>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </body>
+          </html>
+      `);
   } catch (error) {
     console.error('An error occurred:', error);
     res.status(500).send(`
-      <h2>RESULTS</h2>
-      <form action="/submit" method="POST">
-        <label for="username">Enter your username:</label>
-        <input type="text" id="username" name="username">
-        <button type="submit">Submit</button>
-      </form>
-      <p>User data not found</p>
-    `);
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>User Info</title>
+        <!-- Bootstrap CSS -->
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container">
+            <div class="row justify-content-center align-items-center" style="height: 100vh;">
+                <div class="col-md-6">
+                    <div class="text-center">
+                        <h2 class="mb-4">RESULTS</h2>
+                        <form action="/submit" method="POST">
+                            <div class="form-group">
+                                <label for="username">Enter your username:</label>
+                                <input type="text" class="form-control" id="username" name="username">
+                            </div>
+                            <button type="submit" class="btn btn-success btn-block">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+`);
   }
 }
 
