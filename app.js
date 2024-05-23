@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const cheerio = require('cheerio');
+
 const { MongoClient } = require('mongodb');
 
 const uri = "mongodb+srv://abcd:abcdabcd@cluster0.0lherrc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
@@ -100,7 +101,7 @@ async function submitHandler(req, res) {
     });
 
     const browserExecutablePath = puppeteer.executablePath();
-    console.log(`Chromium executable path: ${browserExecutablePath}`);
+    //console.log(`Chromium executable path: ${browserExecutablePath}`);
     const page = await browser.newPage();
 
     console.log('Navigating to login page...');
@@ -239,123 +240,7 @@ app.post('/showMarks', async (req, res) => {
   }
 });
 
-const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
-
-const batchSize = 10;
-
-app.post('/upload', upload.single('rollNumbers'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).send('Please upload a file.');
-        }
-
-        const fileContents = fs.readFileSync(req.file.path, 'utf-8');
-        const rollNumbers = fileContents.split('\n').map(roll => roll.trim()).filter(roll => roll !== '');
-
-        const scrapedData = await scrapeInBatches(rollNumbers);
-
-        res.send(scrapedData);
-    } catch (error) {
-        console.error('An error occurred:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
-
-async function scrapeInBatches(rollNumbers) {
-    const totalBatches = Math.ceil(rollNumbers.length / batchSize);
-    let currentIndex = 0;
-    const scrapedData = [];
-
-    async function processNextBatch() {
-        if (currentIndex >= totalBatches) {
-            return;
-        }
-        const currentBatch = rollNumbers.slice(currentIndex * batchSize, (currentIndex + 1) * batchSize);
-        currentIndex++;
-        const promises = currentBatch.map(rollNumber => scrapeData(rollNumber));
-        const batchData = await Promise.all(promises);
-        scrapedData.push(...batchData);
-        await processNextBatch();
-    }
-    await processNextBatch();
-    return scrapedData;
-}
-
-async function scrapeData(username1) {
-  try {
-      const userid = username1.toLowerCase();
-      let data = await collection.findOne({ userid: userid });
-
-      if (data) {
-          console.log('Data already exists in MongoDB:', userid);
-          return data;
-      }
-
-      console.log('Data dosent exists in MongoDB:', userid);
-
-      console.log("Launching browser...");
-    const browser = await puppeteer.launch({
-      args: [
-        "--disable-setuid-sandbox",
-        "--no-sandbox",
-        "--single-process",
-        "--no-zygote",
-      ],
-    });
-
-    const browserExecutablePath = puppeteer.executablePath();
-    //console.log(`Chromium executable path: ${browserExecutablePath}`);
-    const page = await browser.newPage();
-
-    console.log('Navigating to login page...');
-    await page.goto('https://www.cmrcetexaminations.com/BeeSERP/Login.aspx');
-
-    const username = username1.toUpperCase() + 'P';
-    const password = username;
-    await page.waitForSelector('#txtUserName');
-    await page.type('#txtUserName', username);
-    await page.waitForSelector('#btnNext');
-    await page.click('#btnNext');
-    await page.waitForSelector('#txtPassword');
-    await page.type('#txtPassword', password);
-    await page.waitForSelector('#btnSubmit');
-    await page.click('#btnSubmit');
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    await page.click('#ctl00_cpStud_lnkOverallMarksSemwiseMarks');
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
-    const content = await page.content();
-    const $ = cheerio.load(content);
-
-    const nameElement = $('#ctl00_cpHeader_ucStudCorner_lblStudentName');
-    let name = nameElement.text().trim();
-    name = name.replace("WELCOME", "").trim();
-    console.log('Name:', name);
-    const cgpa = $('#ctl00_cpStud_lblMarks').text().trim();
-    console.log('CGPA:', cgpa);
-
-    const marksData = $('#ctl00_cpStud_pnMarks').html();
-    fs.writeFileSync('page.html', marksData);
-    await browser.close();
-    console.log('User ID:', userid);
-    data = {
-      userid: userid,
-      name: name,
-      cgpa: cgpa,
-      marksData: marksData
-    };
-    await collection.insertOne(data);
-    console.log('Data inserted into MongoDB');
-    return data;
-  } catch (error) {
-      console.error('An error occurred while scraping data for', username, ':', error);
-      return null;
-  }
-}
-
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
-
