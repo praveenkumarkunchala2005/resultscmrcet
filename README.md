@@ -13,8 +13,8 @@
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/praveenkumarkunchala2005/resultscmrcet.git
-   cd resultscmrcet
+   git clone [https://github.com/praveenkumarkunchala2005/webScrapper.git]()
+   cd webScrapper
    ```
 
 2. **Install dependencies:**
