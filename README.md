@@ -32,7 +32,7 @@
 
 4. **Run the application:**
    ```bash
-   node index.js
+   node app.js
    ```
 
    The server will start at `http://localhost:3000` (or another port if specified).
