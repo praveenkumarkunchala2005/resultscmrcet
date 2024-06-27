@@ -1,6 +1,7 @@
-# Node.js Application for Fetching Student Results
+# Node.js Application for WebScrapping
 
-This Node.js application is designed to fetch student results from a specific website and store them in a MongoDB database.
+- This Node.js application is designed to fetch student results from a specific website and store them in a MongoDB database.
+- This project is implemented with the permission of officials, working on the above project without permission can be considered as offence
 
 ## Prerequisites
 
@@ -40,7 +41,7 @@ This Node.js application is designed to fetch student results from a specific we
 
 - Open your web browser and navigate to `http://localhost:3000`.
 - Enter a student username in the form and submit.
-- The application will either fetch the results from MongoDB or scrape the data from the www.cmrcetexaminations.com website if it's not found in the database.
+- The application will either fetch the results from MongoDB. The data has to be needed to scrapeed from the www.cmrcetexaminations.com website before accessing.
 - You can also click "Show Marks Details" to view detailed marks.
 
 ## Technologies Used
