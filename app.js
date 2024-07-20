@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const { MongoClient } = require('mongodb');
 const fs = require('fs');
 const cheerio = require('cheerio');
-const puppeteer = require('puppeteer-core'); // Import puppeteer-core
+const puppeteer = require('puppeteer-core'); 
 
 const uri = "mongodb+srv://abcd:abcdabcd@cluster0.0lherrc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const client = new MongoClient(uri);
@@ -17,7 +17,7 @@ client.connect()
   })
   .catch(err => {
     console.error('Error connecting to MongoDB:', err);
-    process.exit(1); // Exit the process if unable to connect to MongoDB
+    process.exit(1); 
   });
 
 const app = express();
@@ -138,7 +138,7 @@ async function submitHandler(req, res) {
     };
     await collection.insertOne(data);
     console.log('Data inserted into MongoDB');
-    await browser.close(); // Close the browser instance
+    await browser.close(); 
     return res.send(`
           <!DOCTYPE html>
           <html lang="en">
