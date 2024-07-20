@@ -7,7 +7,6 @@
 
 - Node.js installed on your machine
 - MongoDB instance (local or cloud-based)
-- Git installed on your machine
 
 ## Installation
 
